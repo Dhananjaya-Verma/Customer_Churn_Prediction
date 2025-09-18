@@ -89,6 +89,13 @@ Key insights generated from the dataset:
 
 ---
 
+### 🔑 Feature Importance
+The model highlights which features impact churn prediction the most.
+
+![Feature Importance](screenshots/feature_importance.png)
+
+---
+
 ## 🏗️ Model Training
 
 The following ML models were trained and evaluated:
