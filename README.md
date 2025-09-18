@@ -123,7 +123,7 @@ The following ML models were trained and evaluated:
 ![Confusion Matrix](screenshots/confusion_matrix.png)
 
 🖼️ **ROC Curve**
-![ROC Curve](screenshots/ROC_curve.png)
+![ROC Curve](screenshots/ROC_curves.png)
 
 ---
 
