@@ -104,6 +104,7 @@ The following ML models were trained and evaluated:
 * Random Forest
 * XGBoost
 * Support Vector Machine (SVM)
+* KNN
 
 **Best performing model:** Random Forest (accuracy \~85%, AUC \~0.90)
 
@@ -114,10 +115,14 @@ The following ML models were trained and evaluated:
 
 ## 📈 Results
 
-* Accuracy: **85%**
-* Precision: **82%**
-* Recall: **79%**
-* F1-Score: **80%**
+| Model               | Accuracy | Precision | Recall  | F1-Score | AUC      |
+| ------------------- | -------- | --------- | ------- | -------- | -------- |
+| Logistic Regression | 82%      | 80%       | 77%     | 78%      | 0.86     |
+| KNN                 | 80%      | 78%       | 75%     | 76%      | 0.84     |
+| SVM                 | 83%      | 81%       | 78%     | 79%      | 0.87     |
+| Random Forest       | **85%**  | **82%**   | **79%** | **80%**  | **0.90** |
+
+---
 
 🖼️ **Confusion Matrix**
 ![Confusion Matrix](screenshots/confusion_matrix.png)
@@ -135,6 +140,24 @@ Run the prediction script:
 python src/model.py
 ```
 
+## 🎛️ Streamlit App
+![Streamlit App](screenshots/streamlit_app.png)
+
+I built a Streamlit dashboard with:
+
+🔽 Dropdown menu to select ML model (Random Forest, Logistic Regression, SVM, KNN)
+
+🎨 Colorful, interactive UI for predictions
+
+📊 Model results & comparison
+
+📈 Feature importance & SHAP explanations
+
+Run the app locally:
+```bash
+streamlit run src/streamlit_app.py
+```
+
 You can modify the input features inside the script or connect it to an API for real-world deployment.
 
 🖼️ **Sample Prediction Output**
@@ -144,19 +167,7 @@ You can modify the input features inside the script or connect it to an API for 
 
 ## ✅ Future Improvements
 
-* Hyperparameter tuning with GridSearchCV / Optuna
-* Deployment using Flask or FastAPI
-* Adding deep learning models (ANN) for better accuracy
-* Handling class imbalance with SMOTE
-
----
-
-## 🤝 Contributing
-
-Pull requests are welcome! For major changes, please open an issue first to discuss what you’d like to change.
-
----
-
-## 📜 License
-
-This project is licensed under the MIT License.
+* Hyperparameter tuning with Optuna/RandomizedSearchCV
+* Add XGBoost / LightGBM models for comparison
+* Deploy app to Streamlit Cloud / Heroku / AWS
+* Handle class imbalance with SMOTE
