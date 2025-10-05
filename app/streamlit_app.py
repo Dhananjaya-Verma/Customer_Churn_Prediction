@@ -16,7 +16,7 @@ st.set_page_config(
 # ---------- MODEL PATHS ----------
 MODEL_DIR = "models"
 models = {
-    "Random Forest": os.path.join(MODEL_DIR, "churn_pipeline.pkl"),
+    "Random Forest": os.path.join(MODEL_DIR, "churn_pipeline_random_forest.pkl"),
     "KNN": os.path.join(MODEL_DIR, "churn_pipeline_knn.pkl"),
     "SVM": os.path.join(MODEL_DIR, "churn_pipeline_svm.pkl"),
     "Logistic Regression": os.path.join(MODEL_DIR, "churn_pipeline_logistic_regression.pkl"),
@@ -44,6 +44,22 @@ st.markdown("""
         background: #005A9E;
         color: white;
     }
+
+    /* Metric card custom styling */
+    [data-testid="stMetricValue"] {
+        font-size: 28px;
+        color: #0078D7;
+    }
+    [data-testid="stMetricDelta"] {
+        font-size: 16px;
+    }
+    [data-testid="stMetric"] {
+        background: #f9f9f9;
+        padding: 15px;
+        border-radius: 12px;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        text-align: center;
+    }
     </style>
 """, unsafe_allow_html=True)
 
@@ -64,7 +80,6 @@ pipeline = load_model(models[model_choice])
 if page == "🏠 Home":
     st.title("📊 Customer Churn Prediction App")
 
-    # Banner Image
     st.image(
         "https://images.unsplash.com/photo-1533750349088-cd871a92f312?ixlib=rb-4.0.3&auto=format&fit=crop&w=1350&q=80",
         use_container_width=True,
@@ -137,6 +152,7 @@ elif page == "📈 Predict Churn":
         "TotalCharges": [total]
     })
 
+    # 🔮 Predict button yahan hai
     if st.button("🔮 Predict"):
         prediction = pipeline.predict(input_data)[0]
         probability = pipeline.predict_proba(input_data)[0][1]
@@ -144,97 +160,113 @@ elif page == "📈 Predict Churn":
         st.subheader("Prediction Result")
         col1, col2 = st.columns(2)
 
+        # ✅ Left column → normal Streamlit success/error box
         with col1:
             if prediction == 1:
                 st.error(f"⚠️ Customer is **likely to churn** (Risk: {probability:.2f})")
             else:
                 st.success(f"✅ Customer is **not likely to churn** (Risk: {1-probability:.2f})")
 
+        # ✅ Right column → custom styled card (gray background)
         with col2:
-            st.metric("Churn Probability", f"{probability:.2%}")
-            st.metric("Prediction", "Churn" if prediction == 1 else "No Churn")
-
-        style_metric_cards(background_color="#FFFFFF", border_left_color="#0078D7", border_color="#CCCCCC")
+            st.markdown(
+                f"""
+                <div style="
+                    background-color: #f2f2f2;
+                    padding: 20px;
+                    border-radius: 12px;
+                    box-shadow: 0px 4px 8px rgba(0,0,0,0.1);
+                    text-align: center;
+                ">
+                    <h4 style="margin:0; color:#0078D7;">Churn Probability</h4>
+                    <p style="font-size:28px; margin:5px 0; color:#333;">{probability:.2%}</p>
+                    <h4 style="margin:0; color:#0078D7;">Prediction</h4>
+                    <p style="font-size:24px; margin:5px 0; color:#333;">
+                        {"Churn" if prediction == 1 else "No Churn"}
+                    </p>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
 
 elif page == "🔍 Model Insights":
-    import shap
+    st.title(f"🔍 Model Insights ({model_choice})")
 
-    st.title("🔍 Model Insights")
-    st.write("Here are the most important features driving churn predictions:")
+    import shap
+    import matplotlib.pyplot as plt
 
     try:
-        clf = pipeline.named_steps.get("classifier", pipeline)
-
-        # ---- Feature Names Extraction ----
-feature_names = None
-if "preprocessor" in pipeline.named_steps:
-    preprocessor = pipeline.named_steps["preprocessor"]
-
-    num_features = preprocessor.transformers_[0][2]
-    cat_features = preprocessor.transformers_[1][2]
-
-    cat_transformer = preprocessor.transformers_[1][1]
-
-    # Case 1: categorical transformer is a pipeline
-    if hasattr(cat_transformer, "named_steps"):
-        ohe = cat_transformer.named_steps.get("onehot")
-    # Case 2: directly OneHotEncoder
-    elif isinstance(cat_transformer, (type(preprocessor),)):
-        ohe = cat_transformer
-    else:
-        ohe = None
-
-    if ohe is not None and hasattr(ohe, "get_feature_names_out"):
-        cat_expanded = ohe.get_feature_names_out(cat_features)
-        feature_names = list(num_features) + list(cat_expanded)
-    else:
-        feature_names = list(num_features) + list(cat_features)
-
-
-        # ---- Random Forest ----
-        if hasattr(clf, "feature_importances_"):
-            importances = clf.feature_importances_
-            feat_imp = pd.Series(importances, index=feature_names).sort_values(ascending=False).head(15)
-
-            fig, ax = plt.subplots(figsize=(8, 5))
-            feat_imp.plot(kind="barh", ax=ax, color="#0078D7")
-            ax.set_title("Top 15 Feature Importances (Random Forest)")
-            ax.invert_yaxis()
-            st.pyplot(fig)
-
-        # ---- Logistic Regression / Linear SVM ----
-        elif hasattr(clf, "coef_"):
-            importances = clf.coef_[0]
-            feat_imp = pd.Series(importances, index=feature_names).sort_values(key=abs, ascending=False).head(15)
-
-            fig, ax = plt.subplots(figsize=(8, 5))
-            feat_imp.plot(kind="barh", ax=ax, color="#FF5733")
-            ax.set_title("Top 15 Feature Coefficients (Linear Model)")
-            ax.invert_yaxis()
-            st.pyplot(fig)
-
-        # ---- SHAP for non-linear models (KNN, SVM, etc.) ----
+        # Extract classifier step
+        if "model" in pipeline.named_steps:
+            model = pipeline.named_steps["model"]
+        elif "classifier" in pipeline.named_steps:
+            model = pipeline.named_steps["classifier"]
         else:
-            st.info("ℹ️ Using SHAP values since this model has no built-in feature importance.")
+            model = pipeline
 
-            # sample few rows for SHAP
-            df = pd.read_csv(r"D:\CSE(DataScience)\Customer_Churn_Prediction\Datasets\Telco-Customer-Churn-dataset.csv")
-            X_sample = df.drop("Churn", axis=1).sample(100, random_state=42)
+        # Extract preprocessor
+        preprocessor = pipeline.named_steps.get("preprocessor", None)
 
-            # preprocess first
-            X_transformed = pipeline.named_steps["preprocessor"].transform(X_sample)
+        # Get feature names
+        if preprocessor is not None and hasattr(preprocessor, "get_feature_names_out"):
+            feature_names = preprocessor.get_feature_names_out()
+        else:
+            feature_names = input_data.columns  # fallback
 
-            # use KernelExplainer instead of direct Explainer for KNN/SVM
-            explainer = shap.KernelExplainer(clf.predict_proba, X_transformed[:50])
-            shap_values = explainer.shap_values(X_transformed[:10], nsamples=100)
+        importances = None
+        method = None
 
-            st.subheader("📊 SHAP Summary Plot")
-            fig, ax = plt.subplots(figsize=(8, 6))
-            shap.summary_plot(shap_values, X_transformed[:10], feature_names=feature_names, show=False)
-            st.pyplot(fig)
+        # Random Forest → feature_importances_
+        if hasattr(model, "feature_importances_"):
+            importances = model.feature_importances_
+            method = "Tree-based Feature Importances"
+
+        # Logistic Regression → coefficients
+        elif hasattr(model, "coef_"):
+            importances = abs(model.coef_[0])
+            method = "Logistic Regression Coefficients"
+
+        # If still None → fallback to SHAP (for SVM, KNN, etc.)
+        if importances is None:
+            st.info("⚡ Using SHAP for feature importance (since this model doesn’t expose coefficients).")
+
+            # Sample 200 rows from training data for efficiency
+            X_sample = X.sample(n=min(200, len(X)), random_state=42)
+            X_transformed = preprocessor.transform(X_sample) if preprocessor else X_sample
+
+            explainer = shap.Explainer(model, X_transformed)
+            shap_values = explainer(X_transformed)
+
+            importances = np.abs(shap_values.values).mean(axis=0)
+            method = "SHAP Values"
+
+        # Create DataFrame
+        importance_df = pd.DataFrame({
+            "Feature": feature_names,
+            "Importance": importances
+        }).sort_values(by="Importance", ascending=False).head(15)
+
+        st.subheader(f"📊 Top 15 Features Driving Churn ({method})")
+
+        # Plot
+        fig, ax = plt.subplots(figsize=(8, 6))
+        importance_df.plot(
+            kind="barh",
+            x="Feature",
+            y="Importance",
+            legend=False,
+            ax=ax,
+            color="skyblue"
+        )
+        ax.set_xlabel("Importance Score")
+        ax.set_ylabel("Feature")
+        ax.set_title("Top 15 Feature Importances")
+        plt.gca().invert_yaxis()
+
+        st.pyplot(fig)
 
     except Exception as e:
-        st.error(f"Could not compute feature importance/SHAP values: {e}")
+        st.error(f"Could not compute feature importance: {e}")
 
 
 # ---------- ABOUT ----------
