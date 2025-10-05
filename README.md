@@ -89,13 +89,6 @@ Key insights generated from the dataset:
 
 ---
 
-### 🔑 Feature Importance
-The model highlights which features impact churn prediction the most.
-
-![Feature Importance](screenshots/feature_importance.png)
-
----
-
 ## 🏗️ Model Training
 
 The following ML models were trained and evaluated:
@@ -106,7 +99,7 @@ The following ML models were trained and evaluated:
 * Support Vector Machine (SVM)
 * KNN
 
-**Best performing model:** Random Forest (accuracy \~85%, AUC \~0.90)
+**Best performing model:** SVM (accuracy \~84%, AUC \~0.87)
 
 🖼️ **Model Training Snapshot**
 ![Training Progress](screenshots/model_training.png)
@@ -115,12 +108,12 @@ The following ML models were trained and evaluated:
 
 ## 📈 Results
 
-| Model               | Accuracy | Precision | Recall  | F1-Score | AUC      |
-| ------------------- | -------- | --------- | ------- | -------- | -------- |
-| Logistic Regression | 82%      | 80%       | 77%     | 78%      | 0.86     |
-| KNN                 | 80%      | 78%       | 75%     | 76%      | 0.84     |
-| SVM                 | 83%      | 81%       | 78%     | 79%      | 0.87     |
-| Random Forest       | **85%**  | **82%**   | **79%** | **80%**  | **0.90** |
+| Model                  | Accuracy | Precision | Recall | F1-Score | AUC  |
+| ---------------------- | -------- | --------- | ------ | -------- | ---- |
+| Logistic Regression    | 0.63     | 0.60      | 0.57   | 0.58     | 0.63 |
+| Support Vector Machine | 0.84     | 0.81      | 0.78   | 0.79     | 0.87 |
+| KNN                    | 0.80     | 0.78      | 0.75   | 0.76     | 0.84 |
+| Random Forest          | 0.76     | 0.73      | 0.70   | 0.71     | 0.76 |
 
 ---
 
@@ -157,12 +150,6 @@ Run the app locally:
 ```bash
 streamlit run src/streamlit_app.py
 ```
-
-You can modify the input features inside the script or connect it to an API for real-world deployment.
-
-🖼️ **Sample Prediction Output**
-![Prediction Example](screenshots/prediction_output.png)
-
 ---
 
 ## ✅ Future Improvements
